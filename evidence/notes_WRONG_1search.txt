@@ -1,0 +1,10 @@
+MCP (Model Context Protocol) Release Information
+=================================================
+
+Release Date: November 25, 2024
+
+Description: The Model Context Protocol (MCP) is an open standard for connecting AI models to tools and data sources, introduced by Anthropic.
+
+Time Since Release: Approximately 9 months (as of August 22, 2026)
+
+Note: Since MCP is less than a year old, no historical changes were documented.

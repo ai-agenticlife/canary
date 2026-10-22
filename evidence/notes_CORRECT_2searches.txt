@@ -1,0 +1,24 @@
+MCP (Model Context Protocol) Release Information
+================================================
+
+Release Date: November 25, 2024
+- MCP is an open standard for connecting AI models to tools and data sources
+- Introduced by Anthropic
+- This was the initial release with no earlier versions
+
+Changes Since Release (as of August 22, 2026):
+==============================================
+
+MCP has changed substantially since its 2024 launch:
+
+1. Governance Change (December 2025):
+   - Anthropic donated MCP to the Agentic AI Foundation under the Linux Foundation
+
+2. Major Specification Revision (July 28, 2026):
+   - Protocol made stateless
+   - Removed: initialize handshake and Mcp-Session-Id header
+   - Multi Round-Trip Requests replaced server-initiated requests
+   - Deprecated features (with 12-month removal window):
+     * Roots
+     * Sampling
+     * Logging

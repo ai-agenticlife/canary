@@ -1,0 +1,5 @@
+anthropic>=0.40.0
+
+# Optional: real web search instead of the offline corpus.
+# Enable with CANARY_LIVE_SEARCH=1
+# ddgs

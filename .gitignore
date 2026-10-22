@@ -1,0 +1,20 @@
+# Never commit these
+.venv/
+env.sh
+.env
+*.key
+
+# Generated at runtime
+out/
+__pycache__/
+*.pyc
+
+# Test logs (they carry local paths and timestamps)
+canary-test-log.txt
+variability-log.txt
+failure-catch-log.txt
+match-log.txt
+
+# macOS
+.DS_Store
+*.cast
