@@ -5,7 +5,6 @@ tell what will happen. There is no order in here. There's a loop,
 and a model that decides what goes in it, one step at a time.
 
 The control flow does not exist until runtime.
-
     python agent.py "your request"
 """
 
@@ -23,8 +22,8 @@ TASK = sys.argv[1] if len(sys.argv) > 1 else (
 
 MAX_STEPS = 12  # Remember this line. Episode 2 is about this line.
 
-# Raise it for the last shot of episode 1, without editing the line
-# above: CANARY_MAX_STEPS=200 python agent.py '<something impossible>'
+# Raise it without editing the line above:
+#   CANARY_MAX_STEPS=200 python agent.py '<something impossible>'
 MAX_STEPS = int(os.environ.get("CANARY_MAX_STEPS", MAX_STEPS))
 
 SYSTEM = (
@@ -55,12 +54,15 @@ def main():
             model.report("AGENT", time.time() - start)
             return
 
+        tin, tout = model.last_call()
         results = []
         for call in calls:
-            print(f"  [{step}] {call.name}({_short(call.input)})")
+            line = f"  [{step}] {call.name}({_short(call.input)})"
+            print(f"{line:<52}{tin:>7,} in {tout:>5,} out")
 
             if call.name == "done":
                 model.report("AGENT", time.time() - start)
+                print(model.growth())
                 print(f"\n  finished in {step} steps")
                 note = tools.OUT_DIR / "notes.txt"
                 if note.exists():
@@ -79,9 +81,10 @@ def main():
 
     print(f"\n  !! hit the {MAX_STEPS}-step cap without finishing\n")
     model.report("AGENT", time.time() - start)
+    print(model.growth())
 
 
-def _short(d, n=48):
+def _short(d, n=30):
     s = ", ".join(f"{k}={v!r}" for k, v in d.items())
     return s[:n] + ("..." if len(s) > n else "")
 

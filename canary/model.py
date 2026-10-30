@@ -16,6 +16,11 @@ CALLS = 0
 TOKENS_IN = 0
 TOKENS_OUT = 0
 
+# Every call, not just the total. The whole point of episode 2 is that
+# calls are not the same size as each other -- the API is stateless, so
+# each one carries every turn before it.
+CALL_LOG = []        # list of (call_number, input_tokens, output_tokens)
+
 
 def ask(messages, tools=None, system=None, max_tokens=1024):
     """Send messages to the model. Return the raw response."""
@@ -35,7 +40,14 @@ def ask(messages, tools=None, system=None, max_tokens=1024):
     CALLS += 1
     TOKENS_IN += response.usage.input_tokens
     TOKENS_OUT += response.usage.output_tokens
+    CALL_LOG.append((CALLS, response.usage.input_tokens,
+                     response.usage.output_tokens))
     return response
+
+
+def last_call():
+    """(input_tokens, output_tokens) for the most recent call."""
+    return (CALL_LOG[-1][1], CALL_LOG[-1][2]) if CALL_LOG else (0, 0)
 
 
 def text_of(response):
@@ -48,3 +60,15 @@ def report(label, seconds):
         f"\n  {label}: {CALLS} model calls | "
         f"{TOKENS_IN + TOKENS_OUT} tokens | {seconds:.1f}s"
     )
+
+
+def growth():
+    """What the first call cost, what the last one cost, and the ratio.
+
+    If the loop were simply N calls, these would match.
+    """
+    if len(CALL_LOG) < 2:
+        return ""
+    first, last = CALL_LOG[0][1], CALL_LOG[-1][1]
+    return (f"  first call {first:,} in  ->  last call {last:,} in"
+            f"   ({last / first:.1f}x)")

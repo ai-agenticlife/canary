@@ -55,6 +55,7 @@ def main():
     print(f"  [4] {tools.write_file('notes.txt', note)}")
 
     model.report("WORKFLOW", time.time() - start)
+    print(model.growth())
     print(f"\n--- notes.txt ---\n{note}\n")
 
 

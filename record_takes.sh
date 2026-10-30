@@ -27,6 +27,8 @@ TAKES=(
   "hard_agent:80x28"
   "hard_agent2:80x24"
   "cliffhanger:80x30"
+  "growth:80x34"
+  "maxsteps:80x18"
 )
 
 # Some takes are only usable if the program behaved a particular way.
@@ -52,6 +54,15 @@ verify() {
     cliffhanger)
       grep -q '\[1[3-9]\]\|\[2[0-9]\]' "$f" || {
         VERIFY_WHY="never climbed past step 12"; return 1; } ;;
+    growth)
+      grep -q '\[2[0-5]\]' "$f" || {
+        VERIFY_WHY="did not reach step 20 - the climb is the shot"; return 1; }
+      grep -q ' in ' "$f" || {
+        VERIFY_WHY="no per-call token columns - is model.py instrumented?"
+        return 1; } ;;
+    maxsteps)
+      grep -q '23  MAX_STEPS = 12' "$f" || {
+        VERIFY_WHY="line 23 is not MAX_STEPS = 12 any more"; return 1; } ;;
   esac
   return 0
 }
