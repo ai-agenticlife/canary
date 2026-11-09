@@ -10,7 +10,15 @@ Uses the token-counting endpoint if the SDK has it, otherwise makes real
 calls with max_tokens=1 and reads usage.input_tokens -- same answer,
 costs a fraction of a cent.
 
-    python3 measure_call_one.py
+    python3 measure_call_one.py                       # episode 2's default
+    python3 measure_call_one.py --task growth         # the task the cast used
+    python3 measure_call_one.py --tools real          # the fifteen-tool set
+
+Episode 2 put two figures on screen that came from two DIFFERENT runs:
+call one at 793 tokens (from takes/growth.sh, a long multi-sentence task)
+and "twenty-four tokens of that is the question" (from this file, which
+used the short default task). `--task growth` measures the breakdown of
+the call that was actually on screen, which is what should have been said.
 """
 import sys
 from pathlib import Path
@@ -20,15 +28,35 @@ sys.path.insert(0, str(ROOT / "canary"))
 
 import model, tools                                    # noqa: E402
 
-TASK = ("Find out when the Model Context Protocol was released "
-        "and save it to notes.txt.")
+SHORT = ("Find out when the Model Context Protocol was released "
+         "and save it to notes.txt.")
+# Verbatim from takes/growth.sh -- the task behind episode 2's 793.
+GROWTH = ("Find every change made to MCP since its release. Before you "
+          "record any change, verify it with a separate, differently "
+          "worded search. Do not call done until every change has been "
+          "confirmed by at least three independent searches.")
+# Episode 3's task, so its 770 can be broken down the same way.
+EP3 = ("Find out when the Model Context Protocol was released and what "
+       "has changed since. Save both to notes.txt.")
+
+_a = sys.argv[1:]
+_named = {"short": SHORT, "growth": GROWTH, "ep3": EP3}
+TASK = SHORT
+if "--task" in _a:
+    v = _a[_a.index("--task") + 1]
+    TASK = _named.get(v, v)
+TOOLSET_NAME = _a[_a.index("--tools") + 1] if "--tools" in _a else "small"
 SYSTEM = (f"Today is {tools.TODAY}. "
           "You are a research assistant with tools. Work step by step. "
           "Trust what search returns; do not search twice for the same "
           "fact. When you save a note, include only what was asked -- no "
           "added background. Call done() when the task is fully complete.")
 MSGS = [{"role": "user", "content": TASK}]
-ALL = [tools.SEARCH_TOOL, tools.WRITE_TOOL, tools.DONE_TOOL]
+if TOOLSET_NAME == "small":
+    ALL = [tools.SEARCH_TOOL, tools.WRITE_TOOL, tools.DONE_TOOL]
+else:
+    import toolsets
+    ALL = toolsets.build(TOOLSET_NAME)[0]
 
 
 def count(system=None, toolset=None):
@@ -48,7 +76,9 @@ bare = count()
 with_sys = count(system=SYSTEM)
 full = count(system=SYSTEM, toolset=ALL)
 
-print(f"\nCALL ONE, BROKEN DOWN   (model: {model.MODEL})\n")
+print(f"\nCALL ONE, BROKEN DOWN   (model: {model.MODEL})")
+print(f"  toolset: {TOOLSET_NAME} ({len(ALL)} tools)")
+print(f"  task:    {TASK[:66]}{'...' if len(TASK) > 66 else ''}\n")
 rows = [("the question itself", bare),
         ("+ system prompt", with_sys - bare),
         ("+ all three tool schemas", full - with_sys)]
@@ -67,7 +97,11 @@ marginal = {}
 for t in ALL:
     without = [x for x in ALL if x is not t]
     marginal[t["name"]] = full - count(system=SYSTEM, toolset=without)
-    print(f"    {t['name']:<30}{marginal[t['name']]:>7,}")
+    if len(ALL) <= 5:
+        print(f"    {t['name']:<30}{marginal[t['name']]:>7,}")
+if len(ALL) > 5:
+    for n, v in sorted(marginal.items(), key=lambda kv: -kv[1]):
+        print(f"    {n:<30}{v:>7,}")
 
 per_tool = sum(marginal.values())
 overhead = (full - with_sys) - per_tool
@@ -79,7 +113,7 @@ avg = per_tool / len(ALL)
 print(f"\n  the question is {bare/full*100:.0f}% of call one.")
 print(f"  {(full - bare)/full*100:.0f}% ({full - bare:,} tokens) is scaffolding,")
 print(f"  and all of it is sent again on every single call.")
-print(f"\n  EXTRAPOLATION FOR EPISODE 3")
+print(f"\n  EXTRAPOLATION  (episode 3 measured 15 tools at 1,444 for its own task)")
 print(f"  fixed cost of having tools at all:  {overhead:,}")
 print(f"  average schema:                     {avg:,.0f}")
 for n in (3, 5, 10, 15):
